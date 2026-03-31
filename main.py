@@ -5,7 +5,7 @@ import re
 
 try:
 	# url_input = input("Input URLS:")
-	url_input = "https://mykoreankitchen.com/korean-fried-chicken/"
+	url_input = "https://mykoreankitchen.com/korean-beef-bone-broth/"
 	print(url_input)
 except:
 	print('Invalid!')
@@ -20,7 +20,8 @@ def url_get(url):
 def parse(soup):
 
 	ingredients_lists = soup.find_all('div', class_='wprm-recipe-ingredient-group')
-	data = {}
+	data1 = {}
+	data2 = []
 	for titles in ingredients_lists:
 		try:
 			title_element = titles.find(
@@ -29,23 +30,19 @@ def parse(soup):
 			ingredients = titles.find(
 				'ul', class_='wprm-recipe-ingredients'
 			)
-			# ingredient = re.split(
-			# 	'▢', ingredients
-			# )
-			data[title_element] = ()
+
+			data1[title_element] = ()
 			for ingredient in ingredients:
-				data[title_element] = data[title_element] + (ingredient.text,)
-				# print(data)
-				# title_element.append(ingredient.text)
-				# data[title_element[i]]=ingredient.text
-			# data.append(ingredient_element.text)
+				data1[title_element] = data1[title_element] + (ingredient.text,)
+			return data1
+	
 		except AttributeError:
-			ingredient_element = titles.find(
+			ingredients = titles.find(
 				'ul', class_='wprm-recipe-ingredients'
 			)
-			data = {ingredient_element}
-			
-	return print(data)
+			for ingredient in ingredients:
+				data2.append(ingredient.text)
+			return data2
 
 soup = url_get(url_input)
 text = parse(soup)
