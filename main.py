@@ -12,15 +12,14 @@ except:
 	print('Invalid!')
 
 def url_get(url):
-	
 	req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
 	webpage = urlopen(req).read()
 	soup = BeautifulSoup(webpage, 'lxml')
 	return soup
 
-def helpah(data, title_element, list):
+def helpah(data, title_element, ingredient_list, soup):
 	data[title_element] = ()
-	for ingredient in list:
+	for ingredient in ingredient_list:
 		label = soup.find('label',class_='wprm-checkbox-label').text
 		data[title_element] = data[title_element] + (re.sub(label, '',ingredient.text),)
 	return data
@@ -39,14 +38,17 @@ def parse(soup):
 				'h4', class_='wprm-recipe-group-name'
 			).text
 
-			helpah(full_list, sub_recipe, ingredients)
+			helpah(full_list, sub_recipe, ingredients, soup)
 	
 		except AttributeError:
-			helpah(full_list, 'Ingredients', ingredients)
+			helpah(full_list, 'Ingredients', ingredients, soup)
 				
 	return full_list
 
-soup = url_get(url_input)
-text = parse(soup)
+def main():
+	soup = url_get(url_input)
+	text = parse(soup)
+	return text
 
-print(text)
+if __name__ == '__main__':
+	print(main())
