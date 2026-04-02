@@ -26,7 +26,7 @@ def helpah(data, title_element, ingredient_list, soup):
 
 def parse(soup):
 	ingredients_lists = soup.find_all('div', class_='wprm-recipe-ingredient-group')
-	full_list = {}
+	list_dict = {}
 
 	for recipes in ingredients_lists:
 		ingredients = recipes.find(
@@ -38,12 +38,12 @@ def parse(soup):
 				'h4', class_='wprm-recipe-group-name'
 			).text
 
-			helpah(full_list, sub_recipe, ingredients, soup)
+			helpah(list_dict, sub_recipe, ingredients, soup)
 	
 		except AttributeError:
-			helpah(full_list, 'Ingredients', ingredients, soup)
+			helpah(list_dict, 'Ingredients', ingredients, soup)
 				
-	return full_list
+	return list_dict
 
 def main():
 	soup = url_get(url_input)
