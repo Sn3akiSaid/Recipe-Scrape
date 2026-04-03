@@ -3,15 +3,18 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import re
 
-try:
-	### TEST URLS ###
+def url_input():
+	
 	# url_input = "https://mykoreankitchen.com/korean-beef-bone-broth/"
 	url_input = "https://mykoreankitchen.com/korean-fried-chicken/"
-	print(url_input)
-except:
-	print('Invalid!')
 
-def url_get(url):
+	url_input = "Input your URL:"
+	if "mykoreankitchen.com" in url_input:
+		return url_input
+	else:
+		return print("This program currently only supports scraping for mykoreankitchen.com")
+
+def url_request(url):
 	req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
 	webpage = urlopen(req).read()
 	soup = BeautifulSoup(webpage, 'lxml')
@@ -46,7 +49,7 @@ def parse(soup):
 	return list_dict
 
 def main():
-	soup = url_get(url_input)
+	soup = url_request(url_input())
 	text = parse(soup)
 	return text
 
