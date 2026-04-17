@@ -1,57 +1,91 @@
-# import requests
-from urllib.request import Request, urlopen
+import requests
+import json
+
+# from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import re
 
-def url_input():
-	
-	# url_input = "https://mykoreankitchen.com/korean-beef-bone-broth/"
-	url_input = "https://mykoreankitchen.com/korean-fried-chicken/"
 
-	url_input = "Input your URL:"
-	if "mykoreankitchen.com" in url_input:
-		return url_input
-	else:
-		return print("This program currently only supports scraping for mykoreankitchen.com")
+def url_input():
+
+    # url_input = "https://mykoreankitchen.com/korean-beef-bone-broth/"
+    # url_input = "https://mykoreankitchen.com/korean-fried-chicken/"
+
+    user_input = input("Input your URL: ")
+    if "mykoreankitchen.com" in user_input:
+        return user_input
+    else:
+        print("This program currently only supports scraping for mykoreankitchen.com")
+        return None
+
 
 def url_request(url):
-	req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-	webpage = urlopen(req).read()
-	soup = BeautifulSoup(webpage, 'lxml')
-	return soup
+    response = requests.get(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        },
+    )
+    # webpage = urlopen(response).read()
+    soup = BeautifulSoup(response.text, "lxml")
+    # print(response.status_code)
+    # print(response.text[:500])
+    return soup
 
-def helpah(data, title_element, ingredient_list, soup):
-	data[title_element] = ()
-	for ingredient in ingredient_list:
-		label = soup.find('label',class_='wprm-checkbox-label').text
-		data[title_element] = data[title_element] + (re.sub(label, '',ingredient.text),)
-	return data
+
+def parse_ingredient_group(data, title_element, ingredient_list, soup):
+    data[title_element] = ()
+    for ingredient in ingredient_list:
+        label = ingredient_list.find("label", class_="wprm-checkbox-label").text
+        data[title_element] = data[title_element] + (
+            re.sub(label, "", ingredient.text),
+        )
+    return data
+
 
 def parse(soup):
-	ingredients_lists = soup.find_all('div', class_='wprm-recipe-ingredient-group')
-	list_dict = {}
+    ingredients_lists = soup.find_all("div", class_="wprm-recipe-ingredient-group")
+    list_dict = {}
 
-	for recipes in ingredients_lists:
-		ingredients = recipes.find(
-			'ul', class_='wprm-recipe-ingredients'
-		)
-		
-		try:
-			sub_recipe = recipes.find(
-				'h4', class_='wprm-recipe-group-name'
-			).text
+    for recipes in ingredients_lists:
+        ingredients = recipes.find("ul", class_="wprm-recipe-ingredients")
 
-			helpah(list_dict, sub_recipe, ingredients, soup)
-	
-		except AttributeError:
-			helpah(list_dict, 'Ingredients', ingredients, soup)
-				
-	return list_dict
+        try:
+            sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
+
+            parse_ingredient_group(list_dict, sub_recipe, ingredients, soup)
+
+        except AttributeError:
+            parse_ingredient_group(list_dict, "Ingredients", ingredients, soup)
+
+    return print(list_dict)
+
+
+def parse2(soup):
+    ingredients_lists = soup.select_one("script", type="application/ld+json")
+    match = json.loads(ingredients_lists)
+    print(type(match))
+    # for recipes in ingredients_lists:
+    #     ingredients = recipes.find("ul", class_="wprm-recipe-ingredients")
+
+    #     try:
+    #         sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
+
+    #         parse_ingredient_group(list_dict, sub_recipe, ingredients, soup)
+
+    #     except AttributeError:
+    #         parse_ingredient_group(list_dict, "Ingredients", ingredients, soup)
+
+    # return print(list_dict)
+
 
 def main():
-	soup = url_request(url_input())
-	text = parse(soup)
-	return text
+    url = url_input()
+    if url is None:
+        return print("hm")
+    soup = url_request(url)
+    return parse2(soup)
 
-if __name__ == '__main__':
-	print(main())
+
+if __name__ == "__main__":
+    print(main())
