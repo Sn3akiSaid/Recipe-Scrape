@@ -27,6 +27,7 @@ def url_request(url):
         },
     )
     # webpage = urlopen(response).read()
+    response.raise_for_status()
     soup = BeautifulSoup(response.text, "lxml")
     # print(response.status_code)
     # print(response.text[:500])
@@ -62,21 +63,10 @@ def parse(soup):
 
 
 def parse2(soup):
-    ingredients_lists = soup.select_one("script", type="application/ld+json")
-    match = json.loads(ingredients_lists)
-    print(type(match))
-    # for recipes in ingredients_lists:
-    #     ingredients = recipes.find("ul", class_="wprm-recipe-ingredients")
-
-    #     try:
-    #         sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
-
-    #         parse_ingredient_group(list_dict, sub_recipe, ingredients, soup)
-
-    #     except AttributeError:
-    #         parse_ingredient_group(list_dict, "Ingredients", ingredients, soup)
-
-    # return print(list_dict)
+    ingredients_lists = soup.find("script", type="application/ld+json")
+    data = json.loads(ingredients_lists.string)
+    with open("recipe.json", "w") as f:
+        json.dump(data, f, indent=2)
 
 
 def main():
