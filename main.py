@@ -1,64 +1,48 @@
 import requests
 import json
+from requests.exceptions import HTTPError, Timeout, RequestException
 
-# import pandas as pd
-import sqlite3
+
 from bs4 import BeautifulSoup
 import re
 
-conn = sqlite3.connect("recipes.db")
-c = conn.cursor()
-c.execute("PRAGMA foreign_keys = ON")
 
-# c.execute("""DROP TABLE IF EXISTS ingredients""")
-# c.execute("""DROP TABLE IF EXISTS recipes""")
-
-# c.execute("""CREATE TABLE recipes(
-#           recipe_id INTEGER PRIMARY KEY,
-#           recipe_name TEXT NOT NULL
-#           )""")
-
-# c.execute("""CREATE TABLE ingredients(
-#           ingredient_id INTEGER PRIMARY KEY,
-#           ingredient_member TEXT NOT NULL,
-#           recipe_id INTEGER NOT NULL,
-#           FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id)
-#           )""")
-
-
-# ingredient = "1 tsp chipotle paste or powder"
-
-# c.execute("""INSERT INTO ingredients VALUES(?)""", (ingredient,))
-# conn.commit()
-# from urllib.request import Request, urlopen
-
-
+# from databaser import data_entry
 def url_input():
+    """Soupify data"""
 
+    # Some test URLS
     # usr_inp = "https://mykoreankitchen.com/korean-beef-bone-broth/"
     # usr_inp = "https://mykoreankitchen.com/korean-fried-chicken/"
-    usr_inp = "https://boldbeanco.com/blogs/beanspo-recipes/homemade-baked-beans?srsltid=AfmBOopkr11KNW1BU6rqKyp_RTdpiDcQQwREQuEX-g_a3bMmMPpiq8lB"
-    return usr_inp
-    # return input("Input your URL: ")
-    # if "mykoreankitchen.com" in user_input:
-    #     return user_input
-    # else:
-    #     print("This program currently only supports scraping for mykoreankitchen.com")
-    #     return None
+    # usr_inp = "https://boldbeanco.com/blogs/beanspo-recipes/homemade-baked-beans?srsltid=AfmBOopkr11KNW1BU6rqKyp_RTdpiDcQQwREQuEX-g_a3bMmMPpiq8lB"
 
-
-def url_request(url):
+    usr_inp = input("Input your recipe URL: ").strip()
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
     }
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.content, "lxml")
+
+    try:
+        response = requests.get(usr_inp, headers=headers, timeout=5)
+        response.raise_for_status()
+        return response
+    except HTTPError as http_err:
+        print(f"HTTP ERROR: {http_err}")
+    except Timeout as timeout_err:
+        print(f"TIMEOUT ERROR: {timeout_err}")
+    except RequestException as err:
+        print(f"REQUEST ERROR: {err}")
+    return None
+
+
+def souper(validresponse):
+
+    soup = BeautifulSoup(validresponse.content, "lxml")
 
     return soup
 
 
+# Dated Parsing
 def parse_ingredient_group(data, title_element, ingredient_list, soup):
     data[title_element] = ()
     for ingredient in ingredient_list:
@@ -70,6 +54,7 @@ def parse_ingredient_group(data, title_element, ingredient_list, soup):
 
 
 def parse(soup):
+    """Dated parser, generic HTML"""
     ingredients_lists = soup.find_all("div", class_="wprm-recipe-ingredient-group")
     list_dict = {}
 
@@ -87,13 +72,19 @@ def parse(soup):
     return print(list_dict)
 
 
-def parse2(soup):
+# Dated Parsing
+
+
+def parser(soup):
+    """Updated json parser"""
     ingredients_lists = soup.find("script", type="application/ld+json").text.strip()
     data = json.loads(ingredients_lists)
     return data
 
 
 def finder(data, target="recipeIngredient"):
+    """Targets the specific ingredient convention of sites"""
+
     if isinstance(data, dict):
         if target in data:
             return data[target]
@@ -108,29 +99,12 @@ def finder(data, target="recipeIngredient"):
                 return item[target]
 
 
-def data_entry(data_list, url):
-    c.execute("""INSERT INTO recipes(recipe_name) VALUES(?)""", (url,))
-    recipe_id = c.lastrowid
-    for ingredient in data_list:
-        c.execute(
-            """INSERT INTO ingredients(ingredient_member, recipe_id) VALUES(?, ?)""",
-            (ingredient, recipe_id),
-        )
-    conn.commit()
-    c.execute("""SELECT * FROM recipes""")
-    print(c.fetchall())
-    c.execute("""SELECT * FROM ingredients""")
-    print(c.fetchall())
-
-
 def main():
-    url = url_input()
-    if url is None:
-        return print("hm")
-    soup = url_request(url)
-    trial_db = finder(parse2(soup))
-
-    data_entry(trial_db, url)
+    validated_url = url_input()
+    soup = souper(validated_url)
+    trial_db = finder(parser(soup))
+    print(trial_db)
+    # data_entry(trial_db, url)
 
 
 if __name__ == "__main__":
