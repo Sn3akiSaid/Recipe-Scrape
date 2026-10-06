@@ -1,37 +1,53 @@
 import requests
+import time
+import random
 import json
 from requests.exceptions import HTTPError, Timeout, RequestException
-
-
 from bs4 import BeautifulSoup
 import re
 
+USER_AGENT = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5)"
+    "AppleWebKit/537.36 (KHTML, like Gecko)"
+    "Chrome/50.0.2661.102 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate",
+    "Connection": "keep-alive",
+}
+
 
 # from databaser import data_entry
-def url_input():
+def url_input(url: str, max_retries: int = 5):
     """Soupify data"""
 
     # Some test URLS
     # usr_inp = "https://mykoreankitchen.com/korean-beef-bone-broth/"
     # usr_inp = "https://mykoreankitchen.com/korean-fried-chicken/"
-    # usr_inp = "https://boldbeanco.com/blogs/beanspo-recipes/homemade-baked-beans?srsltid=AfmBOopkr11KNW1BU6rqKyp_RTdpiDcQQwREQuEX-g_a3bMmMPpiq8lB"
+    # https://boldbeanco.com/blogs/beanspo-recipes/homemade-baked-beans?srsltid=AfmBOopkr11KNW1BU6rqKyp_RTdpiDcQQwREQuEX-g_a3bMmMPpiq8lB
 
-    usr_inp = input("Input your recipe URL: ").strip()
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
-    }
-
+    # response = requests.get(usr_inp, headers=headers, timeout=5)
+    # response.raise_for_status()
+    # return response
     try:
-        response = requests.get(usr_inp, headers=headers, timeout=5)
-        response.raise_for_status()
-        return response
+        for attempt in range(max_retries):
+            response = requests.get(url, headers=USER_AGENT, timeout=(5, 30))
+            response.raise_for_status()
+            if response.status_code != 429:
+                return response
+
+            retry_after = response.headers.get("Retry-After")
+            delay = float(retry_after) if retry_after else min(2**attempt, 60)
+            time.sleep(delay + random.uniform(0, 1))
+            print(retry_after)
+        raise RuntimeError(f"Still rate limited after {max_retries} retries")
+
     except HTTPError as http_err:
-        print(f"HTTP ERROR: {http_err}")
+        print(f"HTTP Error occured: {http_err}")
     except Timeout as timeout_err:
-        print(f"TIMEOUT ERROR: {timeout_err}")
+        print(f"TIMEOUT Error occured: {timeout_err}")
     except RequestException as err:
-        print(f"REQUEST ERROR: {err}")
+        print(f"REQUEST Error occured: {err}")
     return None
 
 
@@ -43,43 +59,42 @@ def souper(validresponse):
 
 
 # Dated Parsing
-def parse_ingredient_group(data, title_element, ingredient_list, soup):
-    data[title_element] = ()
-    for ingredient in ingredient_list:
-        label = ingredient_list.find("label", class_="wprm-checkbox-label").text
-        data[title_element] = data[title_element] + (
-            re.sub(label, "", ingredient.text),
-        )
-    return data
+# def parse_ingredient_group(data, title_element, ingredient_list, soup):
+#     data[title_element] = ()
+#     for ingredient in ingredient_list:
+#         label = ingredient_list.find("label", class_="wprm-checkbox-label").text
+#         data[title_element] = data[title_element] + (
+#             re.sub(label, "", ingredient.text),
+#         )
+#     return data
+# def parse(soup):
+#     """Dated parser, generic HTML"""
+#     ingredients_lists = soup.find_all("div", class_="wprm-recipe-ingredient-group")
+#     list_dict = {}
 
+#     for recipes in ingredients_lists:
+#         ingredients = recipes.find("ul", class_="wprm-recipe-ingredients")
 
-def parse(soup):
-    """Dated parser, generic HTML"""
-    ingredients_lists = soup.find_all("div", class_="wprm-recipe-ingredient-group")
-    list_dict = {}
+#         try:
+#             sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
 
-    for recipes in ingredients_lists:
-        ingredients = recipes.find("ul", class_="wprm-recipe-ingredients")
+#             parse_ingredient_group(list_dict, sub_recipe, ingredients, soup)
 
-        try:
-            sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
+#         except AttributeError:
+#             parse_ingredient_group(list_dict, "Ingredients", ingredients, soup)
 
-            parse_ingredient_group(list_dict, sub_recipe, ingredients, soup)
-
-        except AttributeError:
-            parse_ingredient_group(list_dict, "Ingredients", ingredients, soup)
-
-    return print(list_dict)
-
-
+#     return print(list_dict)
 # Dated Parsing
 
 
 def parser(soup):
     """Updated json parser"""
-    ingredients_lists = soup.find("script", type="application/ld+json").text.strip()
-    data = json.loads(ingredients_lists)
-    return data
+    try:
+        ingredients_lists = soup.find("script", type="application/ld+json").text.strip()
+    except ValueError:
+        print("No valid json")
+
+    return json.loads(ingredients_lists)
 
 
 def finder(data, target="recipeIngredient"):
@@ -100,10 +115,11 @@ def finder(data, target="recipeIngredient"):
 
 
 def main():
-    validated_url = url_input()
-    soup = souper(validated_url)
-    trial_db = finder(parser(soup))
-    print(trial_db)
+    url = input("Input your recipe URL: ").strip()
+    url_input(url)
+    # soup = souper(validated_url)
+    # trial_db = finder(parser(soup))
+    # print(trial_db)
     # data_entry(trial_db, url)
 
 
