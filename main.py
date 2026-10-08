@@ -18,44 +18,50 @@ USER_AGENT = {
 
 
 # from databaser import data_entry
-def url_input(url: str, max_retries: int = 5):
+def url_input(url: str, max_retries: int = 5) -> requests.Response:
     """Soupify data"""
 
     # Some test URLS
     # usr_inp = "https://mykoreankitchen.com/korean-beef-bone-broth/"
     # usr_inp = "https://mykoreankitchen.com/korean-fried-chicken/"
     # https://boldbeanco.com/blogs/beanspo-recipes/homemade-baked-beans?srsltid=AfmBOopkr11KNW1BU6rqKyp_RTdpiDcQQwREQuEX-g_a3bMmMPpiq8lB
+    response = requests.get(url, headers=USER_AGENT, timeout=5)
+    response.raise_for_status()
+    return response
+    # while True:
+    #     try:
+    #         response.raise_for_status()
+    #         return response
+    #         # for attempt in range(max_retries):
+    #         #     response = requests.get(url, headers=USER_AGENT, timeout=(5, 30))
+    #         #     response.raise_for_status()
+    #         #     if response.status_code != 429:
+    #         #         return response
 
-    # response = requests.get(usr_inp, headers=headers, timeout=5)
-    # response.raise_for_status()
-    # return response
-    try:
-        for attempt in range(max_retries):
-            response = requests.get(url, headers=USER_AGENT, timeout=(5, 30))
-            response.raise_for_status()
-            if response.status_code != 429:
-                return response
-
-            retry_after = response.headers.get("Retry-After")
-            delay = float(retry_after) if retry_after else min(2**attempt, 60)
-            time.sleep(delay + random.uniform(0, 1))
-            print(retry_after)
-        raise RuntimeError(f"Still rate limited after {max_retries} retries")
-
-    except HTTPError as http_err:
-        print(f"HTTP Error occured: {http_err}")
-    except Timeout as timeout_err:
-        print(f"TIMEOUT Error occured: {timeout_err}")
-    except RequestException as err:
-        print(f"REQUEST Error occured: {err}")
-    return None
+    #         #     retry_after = response.headers.get("Retry-After")
+    #         #     delay = float(retry_after) if retry_after else min(2**attempt, 60)
+    #         #     time.sleep(delay + random.uniform(0, 1))
+    #         #     print(retry_after)
+    #         # raise RuntimeError(f"Still rate limited after {max_retries} retries")
+    #     # except Exception as exc:
+    #     #     print(f"There was a problem: {exc}")
+    #     except HTTPError as http_err:
+    #         print(f"HTTP Error occured: {http_err}")
+    #         continue
+    #     except Timeout as timeout_err:
+    #         print(f"TIMEOUT Error occured: {timeout_err}")
+    #         continue
+    #     except RequestException as err:
+    #         print(f"REQUEST Error occured: {err}")
+    #         continue
+    # break
 
 
-def souper(validresponse):
+# def souper(validresponse):
 
-    soup = BeautifulSoup(validresponse.content, "lxml")
+#     soup = BeautifulSoup(validresponse.content, "lxml")
 
-    return soup
+#     return soup
 
 
 # Dated Parsing
@@ -87,14 +93,21 @@ def souper(validresponse):
 # Dated Parsing
 
 
-def parser(soup):
+def parser(validresponse: requests.Response):
     """Updated json parser"""
+    soup = BeautifulSoup(validresponse.content, "lxml")
     try:
-        ingredients_lists = soup.find("script", type="application/ld+json").text.strip()
+        script = soup.find("script", type="application/ld+json")
+        if script is None:
+            raise ValueError("No JSON-LD found.")
+        script_text = script.string
+        if script_text is None:
+            raise ValueError("No text content in JSON-LD")
+        data = json.loads(script_text)
     except ValueError:
         print("No valid json")
 
-    return json.loads(ingredients_lists)
+    return data
 
 
 def finder(data, target="recipeIngredient"):
@@ -115,11 +128,12 @@ def finder(data, target="recipeIngredient"):
 
 
 def main():
-    url = input("Input your recipe URL: ").strip()
-    url_input(url)
-    # soup = souper(validated_url)
-    # trial_db = finder(parser(soup))
-    # print(trial_db)
+    URL = input("Input your recipe URL: ")
+    # url_input(URL)
+    # soup = souper(url)
+
+    trial_db = finder(parser(url_input(URL)))
+    print(trial_db)
     # data_entry(trial_db, url)
 
 
