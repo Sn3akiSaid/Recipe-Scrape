@@ -53,7 +53,7 @@ def data_entry(data_list, url):
 
     c.execute("CREATE TABLE IF NOT EXISTS Recipes (recipe_name TEXT NOT NULL) STRICT")
     c.execute(
-        "CREATE TABLE IF NOT EXISTS Ingredients (ingredient_id INT, ingerdient TEXT NOT NULL) STRICT"
+        "CREATE TABLE IF NOT EXISTS Ingredients_and_Steps (ingredient_id INT, ingerdient TEXT NOT NULL, step_number INT, step TEXT NOT NULL) STRICT"
     )
     c.execute(
         "INSERT INTO Recipes VALUES (?)",
@@ -63,4 +63,4 @@ def data_entry(data_list, url):
     )
 
     for ingredient in enumerate(data_list):
-        c.execute("INSERT INTO Ingredients VALUES (?, ?)", ingredient)
+        c.execute("INSERT INTO Ingredients_and_Steps VALUES (?, ?)", ingredient)
