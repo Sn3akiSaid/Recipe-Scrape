@@ -93,7 +93,7 @@ def url_input(url: str, max_retries: int = 5) -> requests.Response:
 
 
 def parser(validresponse: requests.Response) -> dict | list:
-    """Updated json parser"""
+    """Updated json parser, takes in a valid JSON string and returns a Python object - dict or list"""
     soup = BeautifulSoup(validresponse.content, "lxml")
     try:
         script = soup.find("script", type="application/ld+json")
@@ -110,19 +110,24 @@ def parser(validresponse: requests.Response) -> dict | list:
 
 
 def finder(data: dict | list, target: str = "recipeIngredient") -> list | None:
-    """Targets the specific ingredient convention of sites"""
+    """Targets the specific ingredient convention of sites,
+    checks if the data is a list or dict based on the site's specification.
+    It"""
 
     if isinstance(data, dict):
         if target in data:
             return data[target]
+        # Go through the dict values and call the function recursively to locate the target
         for value in data.values():
+            # Checks if
             result = finder(value, target)
             if result is not None:
                 return result
-
     elif isinstance(data, list):
         for item in data:
+            # Matches @type to Recipe
             if item.get("@type") == "Recipe":
+                # Takes out ingredients only
                 return item[target]
 
 
