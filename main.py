@@ -26,34 +26,32 @@ def url_input(url: str, max_retries: int = 5) -> requests.Response:
     # usr_inp = "https://mykoreankitchen.com/korean-fried-chicken/"
     # https://boldbeanco.com/blogs/beanspo-recipes/homemade-baked-beans?srsltid=AfmBOopkr11KNW1BU6rqKyp_RTdpiDcQQwREQuEX-g_a3bMmMPpiq8lB
     response = requests.get(url, headers=USER_AGENT, timeout=5)
-    # response.raise_for_status()
-    # return response
-    while True:
-        try:
-            response.raise_for_status()
-            return response
-            # for attempt in range(max_retries):
-            #     response = requests.get(url, headers=USER_AGENT, timeout=(5, 30))
-            #     response.raise_for_status()
-            #     if response.status_code != 429:
-            #         return response
+    response.raise_for_status()
+    return response
 
-            #     retry_after = response.headers.get("Retry-After")
-            #     delay = float(retry_after) if retry_after else min(2**attempt, 60)
-            #     time.sleep(delay + random.uniform(0, 1))
-            #     print(retry_after)
-            # raise RuntimeError(f"Still rate limited after {max_retries} retries")
-        # except Exception as exc:
-        #     print(f"There was a problem: {exc}")
-        except HTTPError as http_err:
-            print(f"HTTP Error occured: {http_err}")
-            continue
-        except Timeout as timeout_err:
-            print(f"TIMEOUT Error occured: {timeout_err}")
-            continue
-        except RequestException as err:
-            print(f"REQUEST Error occured: {err}")
-            continue
+    # Error guards, need to fix
+    # try:
+    #     response.raise_for_status()
+    #     return response
+    #         # for attempt in range(max_retries):
+    #         #     response = requests.get(url, headers=USER_AGENT, timeout=(5, 30))
+    #         #     response.raise_for_status()
+    #         #     if response.status_code != 429:
+    #         #         return response
+
+    #         #     retry_after = response.headers.get("Retry-After")
+    #         #     delay = float(retry_after) if retry_after else min(2**attempt, 60)
+    #         #     time.sleep(delay + random.uniform(0, 1))
+    #         #     print(retry_after)
+    #         # raise RuntimeError(f"Still rate limited after {max_retries} retries")
+    #     # except Exception as exc:
+    #     #     print(f"There was a problem: {exc}")
+    # except HTTPError as http_err:
+    #     print(f"HTTP Error occured: {http_err}")
+    # except Timeout as timeout_err:
+    #     print(f"TIMEOUT Error occured: {timeout_err}")
+    # except RequestException as err:
+    #     print(f"REQUEST Error occured: {err}")
 
 
 # def souper(validresponse):
@@ -131,12 +129,22 @@ def finder(data: dict | list, target: str = "recipeIngredient") -> list | None:
                 return item[target]
 
 
+def cleanup(unformatted_list: list | None) -> list:
+    if unformatted_list is not None:
+        # Removes trailing whitespace, newlines, etc.
+        stripped_list = [j.strip() for j in unformatted_list]
+        # Filters out specific instances from a list - "blank" for one of the websites
+        formatted_list = list(filter(lambda a: a != "blank", stripped_list))
+
+    return formatted_list
+
+
 def main():
     URL = input("Input your recipe URL: ")
     # url_input(URL)
     # soup = souper(url)
 
-    trial_db = finder(parser(url_input(URL)))
+    trial_db = cleanup(finder(parser(url_input(URL))))
     print(trial_db)
     # data_entry(trial_db, url)
 
