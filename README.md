@@ -1,13 +1,21 @@
 ### Recipe Scraper 
 
 Basic recipe scraper that utilises BeautifulSoup to pull out an ingredient list out of a recipe website.\\
-Utilizes schema.org standardization to extract a "recipeIngredient" list from recipe websites.
+Utilizes schema.org standardization to extract a "recipeIngredient" list from recipe websites.\\
+Rudimentary CRUD app
+
+Roadmap: Combine script with CRUD app. Deploy on own Linux server.
 
 **Very early stages**
 
-Run by
+Run script by
 ```
-uv run python3 main.py
+uv run main.py
+```
+
+Run app by
+```
+uv run app.py
 ```
 
 UPDATE:
