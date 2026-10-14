@@ -1,29 +1,29 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Task Master</title>
+<title>Recipe Master</title>
 {% endblock %}
 
 {% block body %}
 <div class="content">
-    <h1 style="text-align: center;">Task Master</h1>
-    {% if tasks|length < 1 %}
-    <h4 style="text-align: center;">No tasks yet, create one below!</h4>
+    <h1 style="text-align: center;">Recipe Master</h1>
+    {% if recipes|length < 1 %}
+    <h4 style="text-align: center;">No recipes yet, create one below!</h4>
     {% else %}
     <table>
         <tr>
-            <th>Task</th>
+            <th>Recipe</th>
             <th>Added</th>
             <th>Actions</th>
         </tr>
-        {% for task in tasks %}
+        {% for recipe in recipes %}
             <tr>
-                <td>{{ task.content }}</td>
-                <td>{{ task.date_created.date() }}</td>
+                <td>{{ recipe.content }}</td>
+                <td>{{ recipe.date_created.date() }}</td>
                 <td>
-                    <a href="/delete/{{task.id}}">Delete</a>
+                    <a href="/delete/{{recipe.id}}">Delete</a>
                     <br>
-                    <a href="/update/{{task.id}}">Update</a>
+                    <a href="/update/{{recipe.id}}">Update</a>
                 </td>
             </tr>
         {% endfor %}
@@ -31,7 +31,7 @@
     {% endif %}
     <form action="/" method="POST">
         <input type="text" name="content" id="content">
-        <input type="submit" value="Add Task">
+        <input type="submit" value="Add recipe">
     </form>
 </div>
 {% endblock %}
