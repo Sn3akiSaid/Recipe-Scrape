@@ -140,12 +140,15 @@ def cleanup(unformatted_list: list | None) -> list:
 
 
 def main():
-    URL = input("Input your recipe URL: ")
+    try:
+        URL = input("Input your recipe URL: ")
+    except Exception as e:
+        print(f"No valid url, error {e}")
     # url_input(URL)
     # soup = souper(url)
-
-    trial_db = cleanup(finder(parser(url_input(URL))))
-    print(trial_db)
+    if URL:
+        trial_db = cleanup(finder(parser(url_input(URL))))
+        print(trial_db)
     # data_entry(trial_db, url)
 
 
