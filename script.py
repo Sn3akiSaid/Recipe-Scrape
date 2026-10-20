@@ -4,7 +4,6 @@ import random
 import json
 from requests.exceptions import HTTPError, Timeout, RequestException
 from bs4 import BeautifulSoup
-import re
 
 USER_AGENT = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5)"
