@@ -2,6 +2,7 @@ import requests
 import time
 import random
 import json
+import re
 from requests.exceptions import HTTPError, Timeout, RequestException
 from bs4 import BeautifulSoup
 
@@ -20,10 +21,6 @@ USER_AGENT = {
 def url_input(url: str, max_retries: int = 5) -> requests.Response:
     """Soupify data"""
 
-    # Some test URLS
-    # usr_inp = "https://mykoreankitchen.com/korean-beef-bone-broth/"
-    # usr_inp = "https://mykoreankitchen.com/korean-fried-chicken/"
-    # https://boldbeanco.com/blogs/beanspo-recipes/homemade-baked-beans?srsltid=AfmBOopkr11KNW1BU6rqKyp_RTdpiDcQQwREQuEX-g_a3bMmMPpiq8lB
     response = requests.get(url, headers=USER_AGENT, timeout=5)
     response.raise_for_status()
     return response
@@ -61,35 +58,39 @@ def url_input(url: str, max_retries: int = 5) -> requests.Response:
 
 
 # Dated Parsing
-# def parse_ingredient_group(data, title_element, ingredient_list, soup):
-#     data[title_element] = ()
-#     for ingredient in ingredient_list:
-#         label = ingredient_list.find("label", class_="wprm-checkbox-label").text
-#         data[title_element] = data[title_element] + (
-#             re.sub(label, "", ingredient.text),
-#         )
-#     return data
-# def parse(soup):
-#     """Dated parser, generic HTML"""
-#     ingredients_lists = soup.find_all("div", class_="wprm-recipe-ingredient-group")
-#     list_dict = {}
+def helper_method(data, title_element, ingredient_list, soup):
+    data[title_element] = ()
+    for ingredient in ingredient_list:
+        label = ingredient_list.find("label", class_="wprm-checkbox-label").text
+        data[title_element] = data[title_element] + (
+            re.sub(label, "", ingredient.text),
+        )
+    return data
 
-#     for recipes in ingredients_lists:
-#         ingredients = recipes.find("ul", class_="wprm-recipe-ingredients")
 
-#         try:
-#             sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
+def html_parser(soup):
+    """Dated parser, generic HTML"""
+    ingredients_lists = soup.find_all("div", class_="wprm-recipe-ingredient-group")
+    list_dict = {}
 
-#             parse_ingredient_group(list_dict, sub_recipe, ingredients, soup)
+    for recipes in ingredients_lists:
+        ingredients = recipes.find("ul", class_="wprm-recipe-ingredients")
 
-#         except AttributeError:
-#             parse_ingredient_group(list_dict, "Ingredients", ingredients, soup)
+        try:
+            sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
 
-#     return print(list_dict)
+            helper_method(list_dict, sub_recipe, ingredients, soup)
+
+        except AttributeError:
+            helper_method(list_dict, "Ingredients", ingredients, soup)
+
+    return print(list_dict)
+
+
 # Dated Parsing
 
 
-def parser(validresponse: requests.Response) -> dict | list:
+def json_parser(validresponse: requests.Response) -> dict | list:
     """Updated json parser, takes in a valid JSON string and returns a Python object - dict or list"""
     soup = BeautifulSoup(validresponse.content, "lxml")
     try:
@@ -136,20 +137,3 @@ def cleanup(unformatted_list: list | None) -> list:
         formatted_list = list(filter(lambda a: a != "blank", stripped_list))
 
     return formatted_list
-
-
-def main():
-    try:
-        URL = input("Input your recipe URL: ")
-    except Exception as e:
-        print(f"No valid url, error {e}")
-    # url_input(URL)
-    # soup = souper(url)
-    if URL:
-        trial_db = cleanup(finder(parser(url_input(URL))))
-        print(trial_db)
-    # data_entry(trial_db, url)
-
-
-if __name__ == "__main__":
-    main()
