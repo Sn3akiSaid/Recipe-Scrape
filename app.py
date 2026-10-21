@@ -2,6 +2,7 @@ from flask import Flask, render_template, url_for, request, redirect
 from views import views
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import script
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"  # /// - relative path
@@ -73,6 +74,8 @@ def view_recipe(id):
     recipe = Todo.query.get_or_404(id)
     if request.method == "POST":
         recipe.content = request.form["content"]
+        #
+        # ingredient.content = request
         try:
             db.session.commit()
             return redirect("/")
