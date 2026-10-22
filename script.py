@@ -50,13 +50,6 @@ def url_input(url: str, max_retries: int = 5) -> requests.Response:
     #     print(f"REQUEST Error occured: {err}")
 
 
-# def souper(validresponse):
-
-#     soup = BeautifulSoup(validresponse.content, "lxml")
-
-#     return soup
-
-
 # Dated Parsing
 def helper_method(data, title_element, ingredient_list, soup):
     data[title_element] = ()
