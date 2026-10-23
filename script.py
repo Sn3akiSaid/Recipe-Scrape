@@ -51,7 +51,10 @@ def url_input(url: str, max_retries: int = 5) -> requests.Response:
 
 
 # Dated Parsing
-def helper_method(data, title_element, ingredient_list, soup):
+def helper_method(data, title_element, ingredient_list):
+    """
+    Filters and formats data
+    """
     data[title_element] = ()
     for ingredient in ingredient_list:
         label = ingredient_list.find("label", class_="wprm-checkbox-label").text
@@ -62,7 +65,9 @@ def helper_method(data, title_element, ingredient_list, soup):
 
 
 def html_parser(soup):
-    """Dated parser, generic HTML"""
+    """
+    Parses HTML and finds ingredient group, works for specific websites only.
+    """
     ingredients_lists = soup.find_all("div", class_="wprm-recipe-ingredient-group")
     list_dict = {}
 
@@ -72,10 +77,10 @@ def html_parser(soup):
         try:
             sub_recipe = recipes.find("h4", class_="wprm-recipe-group-name").text
 
-            helper_method(list_dict, sub_recipe, ingredients, soup)
+            helper_method(list_dict, sub_recipe, ingredients)
 
         except AttributeError:
-            helper_method(list_dict, "Ingredients", ingredients, soup)
+            helper_method(list_dict, "Ingredients", ingredients)
 
     return print(list_dict)
 
@@ -84,7 +89,9 @@ def html_parser(soup):
 
 
 def json_parser(validresponse: requests.Response) -> dict | list:
-    """Updated json parser, takes in a valid JSON string and returns a Python object - dict or list"""
+    """
+    Updated json parser, takes in a valid JSON string and returns a Python object - dict or list
+    """
     soup = BeautifulSoup(validresponse.content, "lxml")
     try:
         script = soup.find("script", type="application/ld+json")
@@ -100,10 +107,11 @@ def json_parser(validresponse: requests.Response) -> dict | list:
     return data
 
 
-def finder(data: dict | list, target: str = "recipeIngredient") -> list | None:
-    """Targets the specific ingredient convention of sites,
+def finder(data: dict | list, target: str = "recipeIngredient") -> list[str] | None:
+    """
+    Targets the specific ingredient convention of sites,
     checks if the data is a list or dict based on the site's specification.
-    It"""
+    """
 
     if isinstance(data, dict):
         if target in data:
@@ -122,7 +130,10 @@ def finder(data: dict | list, target: str = "recipeIngredient") -> list | None:
                 return item[target]
 
 
-def cleanup(unformatted_list: list | None) -> list:
+def cleanup(unformatted_list: list | None) -> list[str]:
+    """
+    Filters out whitespaces and unnecessary words.
+    """
     if unformatted_list is not None:
         # Removes trailing whitespace, newlines, etc.
         stripped_list = [j.strip() for j in unformatted_list]
@@ -130,3 +141,14 @@ def cleanup(unformatted_list: list | None) -> list:
         formatted_list = list(filter(lambda a: a != "blank", stripped_list))
 
     return formatted_list
+
+
+if __name__ == "__main__":
+    try:
+        URL = input("Input your recipe URL: ")
+    except Exception as e:
+        print(f"No valid url, error {e}")
+
+    if URL:
+        trial_db = cleanup(finder(json_parser(url_input(URL))))
+    print(trial_db)
